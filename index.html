@@ -1,0 +1,649 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+
+  <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>小李22</title>
+  <link rel=stylesheet href="platform.css" type="text/css">
+  <link rel=stylesheet href="libs/dateField/jquery.dateField.css" type="text/css">
+  <link rel=stylesheet href="gantt.css" type="text/css">
+  <link rel=stylesheet href="print.css" type="text/css" media="print">
+<script src="http://libs.baidu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="http://libs.baidu.com/jqueryui/1.8.22/jquery-ui.min.js "></script>
+  <script src="libs/jquery.livequery.min.js"></script>
+  <script src="libs/jquery.timers.js"></script>
+  <script src="libs/platform.js"></script>
+  <script src="libs/date.js"></script>
+  <script src="libs/i18nJs2.js"></script>
+  <script src="libs/dateField/jquery.dateField.js"></script>
+  <script src="libs/JST/jquery.JST.js"></script>
+  <link rel="stylesheet" type="text/css" href="libs/jquery.svg.css">
+  <script type="text/javascript" src="libs/jquery.svg.min.js"></script>
+  <script type="text/javascript" src="libs/jquery.svgdom.1.8.js"></script>
+  <script src="ganttUtilities.js"></script>
+  <script src="ganttTask.js"></script>
+  <script src="ganttDrawerSVG.js"></script>
+  <script src="ganttGridEditor.js"></script>
+  <script src="ganttMaster2.js"></script>
+    <style>
+        body{
+            background-color: #fff;
+            overflow: hidden;
+        }
+        #workSpace{
+            padding:0;
+            overflow-y:auto;
+            overflow-x:hidden;
+            border:1px solid #e5e5e5;
+            position:relative;
+            margin:0 5px
+        }
+        .resEdit {
+            padding: 15px;
+        }
+        .resLine {
+            width: 95%;
+            padding: 3px;
+            margin: 5px;
+            border: 1px solid #d0d0d0;
+        }
+        .ganttButtonBar h1{
+            color: #000000;
+            font-weight: bold;
+            font-size: 28px;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="workSpace"></div>
+<div id="taZone" style="display:none;" class="noprint">
+
+</div>
+<form id="gimmeBack" style="display:none;" action="../gimmeBack.jsp" method="post" target="_blank"><input type="hidden" name="prj" id="gimBaPrj"></form>
+<div id="gantEditorTemplates" style="display:none;">
+    <!--甘特图操作条按钮-->
+  <div class="__template__" type="GANTBUTTONS"><!--
+
+  <div class="ganttButtonBar noprint">
+    <div class="buttons">
+
+    <button onclick="$('#workSpace').trigger('undo.gantt');" class="button textual" title="撤销"><span class="teamworkIcon">&#39;</span></button>
+
+    <button onclick="$('#workSpace').trigger('redo.gantt');" class="button textual" title="恢复"><span class="teamworkIcon">&middot;</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="$('#workSpace').trigger('addAboveCurrentTask.gantt');" class="button textual" title="上方插入"><span class="teamworkIcon">l</span></button>
+
+    <button onclick="$('#workSpace').trigger('addBelowCurrentTask.gantt');" class="button textual" title="下方插入"><span class="teamworkIcon">X</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="$('#workSpace').trigger('indentCurrentTask.gantt');" class="button textual" title="降级"><span class="teamworkIcon">.</span></button>
+
+    <button onclick="$('#workSpace').trigger('outdentCurrentTask.gantt');" class="button textual" title="升级"><span class="teamworkIcon">:</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="$('#workSpace').trigger('moveUpCurrentTask.gantt');" class="button textual" title="上移"><span class="teamworkIcon">k</span></button>
+
+    <button onclick="$('#workSpace').trigger('moveDownCurrentTask.gantt');" class="button textual" title="下移"><span class="teamworkIcon">j</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="$('#workSpace').trigger('zoomMinus.gantt');" class="button textual" title="缩小"><span class="teamworkIcon">)</span></button>
+
+    <button onclick="$('#workSpace').trigger('zoomPlus.gantt');" class="button textual" title="放大"><span class="teamworkIcon">(</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="$('#workSpace').trigger('deleteCurrentTask.gantt');" class="button textual" title="删除"><span class="teamworkIcon">&cent;</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="print();" class="button textual" title="打印"><span class="teamworkIcon">p</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="ge.gantt.showCriticalPath=!ge.gantt.showCriticalPath; ge.redraw();" class="button textual" title="关键路径"><span class="teamworkIcon">&pound;</span></button>
+
+    <span class="ganttButtonSeparator"></span>
+
+    <button onclick="editResources();" class="button textual" title="编辑资源"><span class="teamworkIcon">M</span></button>
+
+      &nbsp; &nbsp; &nbsp; &nbsp;
+
+      <button onclick="saveGanttOnServer();" class="button first big" title="保存">保存</button>
+
+    </div></div>
+
+  --></div>
+    <!--甘特图任务表头-->
+  <div class="__template__" type="TASKSEDITHEAD"><!--
+
+  <table class="gdfTable" cellspacing="0" cellpadding="0">
+
+    <thead>
+
+    <tr style="height:40px">
+
+      <th class="gdfColHeader" style="width:35px;">NO.</th>
+
+      <th class="gdfColHeader" style="width:25px;"></th>
+
+      <th class="gdfColHeader gdfResizable" style="width:30px;">任务编号</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:300px;">任务名称</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:80px;">开始时间</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:80px;">完成时间</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:50px;">工作日</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:50px;">前置任务</th>
+
+      <th class="gdfColHeader gdfResizable" style="width:200px;">里程碑节点</th>
+
+    </tr>
+
+    </thead>
+
+  </table>
+
+  --></div>
+    <!--甘特图任务表条目-->
+  <div class="__template__" type="TASKROW"><!--
+
+  <tr taskId="(#=obj.id#)" class="taskEditRow" level="(#=level#)">
+
+    <th class="gdfCell edit" align="right" style="cursor:pointer;"><span class="taskRowIndex">(#=obj.getRow()+1#)</span> <span class="teamworkIcon" style="font-size:12px;" >e</span></th>
+
+    <td class="gdfCell noClip" align="center"><div class="taskStatus cvcColorSquare" status="(#=obj.status#)"></div></td>
+
+    <td class="gdfCell"><input type="text" name="code" value="(#=obj.code?obj.code:''#)" readonly></td>
+
+    <td class="gdfCell indentCell" style="padding-left:(#=obj.level*10#)px;">
+
+      <div class="(#=obj.isParent()?'exp-controller expcoll exp':'exp-controller'#)" align="center"></div>
+
+      <input type="text" name="name" value="(#=obj.name#)">
+
+    </td>
+
+
+
+    <td class="gdfCell"><input type="text" name="start"  value="" class="date"></td>
+
+    <td class="gdfCell"><input type="text" name="end" value="" class="date"></td>
+
+    <td class="gdfCell"><input type="text" name="duration" value="(#=obj.duration#)"></td>
+
+    <td class="gdfCell"><input type="text" name="depends" value="(#=obj.depends#)" (#=obj.hasExternalDep?"readonly":""#)></td>
+
+    <td class="gdfCell"><input type="text" value="(#=obj.getAssigsString()#)"></td>
+
+  </tr>
+
+  --></div>
+    <!--甘特图任务表条目（空）-->
+  <div class="__template__" type="TASKEMPTYROW"><!--
+
+  <tr class="taskEditRow emptyRow" >
+
+    <th class="gdfCell" align="right"></th>
+
+    <td class="gdfCell noClip" align="center"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+    <td class="gdfCell"></td>
+
+  </tr>
+
+  --></div>
+    <!--甘特图操作条（不确定）-->
+  <div class="__template__" type="TASKBAR"><!--
+
+<div class="taskBox taskBoxDiv" taskId="(#=obj.id#)" >
+
+    <div class="layout (#=obj.hasExternalDep?'extDep':''#)">
+
+      <div class="taskStatus" status="(#=obj.status#)"></div>
+
+      <div class="taskProgress" style="width:(#=obj.progress>100?100:obj.progress#)%; background-color:(#=obj.progress>100?'red':'rgb(153,255,51);'#);"></div>
+
+      <div class="milestone (#=obj.startIsMilestone?'active':''#)" ></div>
+
+
+
+      <div class="taskLabel"></div>
+
+      <div class="milestone end (#=obj.endIsMilestone?'active':''#)" ></div>
+
+    </div>
+
+  </div>
+
+  --></div>
+    <!--甘特图状态显示-->
+  <div class="__template__" type="CHANGE_STATUS"><!--
+
+    <div class="taskStatusBox">
+
+      <div class="taskStatus cvcColorSquare" status="STATUS_ACTIVE" title="活跃"></div>
+
+      <div class="taskStatus cvcColorSquare" status="STATUS_DONE" title="完成"></div>
+
+      <div class="taskStatus cvcColorSquare" status="STATUS_FAILED" title="失败"></div>
+
+      <div class="taskStatus cvcColorSquare" status="STATUS_SUSPENDED" title="挂起"></div>
+
+      <div class="taskStatus cvcColorSquare" status="STATUS_UNDEFINED" title="未定义"></div>
+
+    </div>
+
+  --></div>
+    <!--甘特图弹框编辑框-->
+  <div class="__template__" type="TASK_EDITOR"><!--
+
+  <div class="ganttTaskEditor">
+
+  <table width="100%">
+
+    <tr>
+
+      <td>
+
+        <table cellpadding="5">
+
+          <tr>
+
+            <td><label for="code">任务编号</label><br><input type="text" name="code" id="code" value="" class="formElements" readonly></td>
+
+           </tr><tr>
+
+            <td><label for="name">任务名称</label><br><input type="text" name="name" id="name" value=""  size="35" class="formElements"></td>
+
+          </tr>
+
+          <tr></tr>
+
+            <td>
+
+              <label for="description">描述信息</label><br>
+
+              <textarea rows="5" cols="30" id="description" name="description" class="formElements"></textarea>
+
+            </td>
+
+          </tr>
+
+        </table>
+
+      </td>
+
+      <td valign="top">
+
+        <table cellpadding="5">
+
+          <tr>
+
+          <td colspan="2"><label for="status">状态</label><br><div id="status" class="taskStatus" status=""></div></td>
+
+          <tr>
+
+          <td colspan="2"><label for="progress">进度</label><br><input type="text" name="progress" id="progress" value="" size="3" class="formElements"></td>
+
+          </tr>
+
+          <tr>
+
+          <td><label for="start">开始时间</label><br><input type="text" name="start" id="start"  value="" class="date" size="10" class="formElements"><input type="checkbox" id="startIsMilestone"> </td>
+
+          <td rowspan="2" class="graph" style="padding-left:50px"><label for="duration">工作日</label><br><input type="text" name="duration" id="duration" value=""  size="5" class="formElements"></td>
+
+        </tr><tr>
+
+          <td><label for="end">结束时间</label><br><input type="text" name="end" id="end" value="" class="date"  size="10" class="formElements"><input type="checkbox" id="endIsMilestone"></td>
+
+        </table>
+
+      </td>
+
+    </tr>
+
+    </table>
+
+
+
+  <h2>分配资源</h2>
+
+  <table  cellspacing="1" cellpadding="0" width="100%" id="assigsTable">
+
+    <tr>
+
+      <th style="width:100px;">执行人</th>
+
+      <th style="width:70px;">角色</th>
+
+      <th style="width:30px;">估计用时</th>
+
+      <th style="width:30px;" id="addAssig"><span class="teamworkIcon" style="cursor: pointer">+</span></th>
+
+    </tr>
+
+  </table>
+
+
+
+  <div style="text-align: right; padding-top: 20px"><button id="saveButton" class="button big">save</button></div>
+
+  </div>
+
+  --></div>
+    <!--甘特图任务分配条-->
+  <div class="__template__" type="ASSIGNMENT_ROW"><!--
+
+  <tr taskId="(#=obj.task.id#)" assigId="(#=obj.assig.id#)" class="assigEditRow" >
+
+    <td ><select name="resourceId"  class="formElements" (#=obj.assig.id.indexOf("tmp_")==0?"":"disabled"#) ></select></td>
+
+    <td ><select type="select" name="roleId"  class="formElements"></select></td>
+
+    <td ><input type="text" name="effort" value="(#=getMillisInHoursMinutes(obj.assig.effort)#)" size="5" class="formElements"></td>
+
+    <td align="center"><span class="teamworkIcon delAssig" style="cursor: pointer">d</span></td>
+
+  </tr>
+
+  --></div>
+    <!--甘特图资源编辑表头-->
+  <div class="__template__" type="RESOURCE_EDITOR"><!--
+
+  <div class="resourceEditor" style="padding: 5px;">
+
+
+
+    <h2>Project team</h2>
+
+    <table  cellspacing="1" cellpadding="0" width="100%" id="resourcesTable">
+
+      <tr>
+
+        <th style="width:100px;">名称</th>
+
+        <th style="width:30px;" id="addResource"><span class="teamworkIcon" style="cursor: pointer">+</span></th>
+
+      </tr>
+
+    </table>
+
+
+
+    <div style="text-align: right; padding-top: 20px"><button id="resSaveButton" class="button big">保存</button></div>
+
+  </div>
+
+  --></div>
+    <!--甘特图资源编辑行-->
+  <div class="__template__" type="RESOURCE_ROW"><!--
+
+  <tr resId="(#=obj.id#)" class="resRow" >
+
+    <td ><input type="text" name="name" value="(#=obj.name#)" style="width:100%;" class="formElements"></td>
+
+    <td align="center"><span class="teamworkIcon delRes" style="cursor: pointer">d</span></td>
+
+  </tr>
+
+  --></div>
+
+</div>
+
+<script type="text/javascript">
+    var ge;
+    $(function() {
+        /*------------------------------------------- TODO: 定义函数 ------------------------------------------------------*/
+//    TODO:初始化数据
+        function initData(){
+           var prof = new Profiler("loadServerSide");
+            prof.reset();
+            $.ajax({
+                url:"./data.json",
+                type:"GET",
+                dataType:"json"
+            }).done(function (res) {
+                prof.stop();
+                ge.loadProject(res);
+                ge.checkpoint();
+                ge.levelCode();
+            })
+        }
+//   TODO:调用数据
+        function zjData(){
+//TODO:填写默认团队合作角色（如果有的话）
+            if (!ge.roles || ge.roles.length == 0) {
+                setRoles();
+            }
+//TODO:填写默认资源角色（如果有）
+            if (!ge.resources || ge.resources.length == 0) {
+                setResource();
+            }
+        }
+        /*-------------------------------------------TODO: 初始化甘特图------------------------------------------------------*/
+
+        $("#ganttemplates").loadTemplates();
+        ge = new GanttMaster();
+//TODO:设置code是否自动编码
+        ge.isLevelCode = true;
+        var workSpace = $("#workSpace");
+        workSpace.css({
+            width: $(window).width() - 20,
+            height: $(window).height() - 100
+        });
+        ge.init(workSpace);
+        $(".ganttButtonBar div").append("<button onclick='clearGantt();' class='button'>清空</button>")
+            .append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")
+            .append("<button onclick='getFile();' class='button'>导出</button>");
+        $(".ganttButtonBar div").addClass('buttons');
+// TODO:用本地化覆盖
+//TODO:从服务器模拟数据加载.
+        initData();
+// TODO:甘特图自适应
+        $(window).resize(function(){
+            workSpace.css({width:$(window).width() - 20,height:$(window).height() - 100});
+            workSpace.trigger("resize.gantt");
+        });
+    });
+
+    /*------------------------------------------- TODO: 本地存储管理（仅适用于此演示） ------------------------------------------------------*/
+    function saveGanttOnServer() {
+        if(!ge.canWrite) {
+            return;
+        }
+        //这是一个模拟：将数据保存到本地存储或文本区
+
+         var prj = ge.saveProject();
+        console.log(JSON.stringify(prj))
+      /*delete prj.resources;
+         delete prj.roles;
+      var prof = new Profiler("saveServerSide");
+         prof.reset();
+         if (ge.deletedTaskIds.length>0) {
+         if (!confirm("TASK_THAT_WILL_BE_REMOVED\n"+ge.deletedTaskIds.length)) {
+         return;
+         }
+         }
+         $.ajax("ganttAjaxController.jsp", {
+         dataType:"json",
+         data: {CM:"SVPROJECT",prj:JSON.stringify(prj)},
+         type:"POST",
+         success: function(response) {
+         if (response.ok) {
+         prof.stop();
+         if (response.project) {
+         ge.loadProject(response.project); //必须重新加载为“tmp_”ids现在是好的
+         } else {
+         ge.reset();
+         }
+         } else {
+         var errMsg="Errors saving project\n";
+         if (response.message) {
+         errMsg=errMsg+response.message+"\n";
+
+         }
+
+
+         if (response.errorMessages.length) {
+
+         errMsg += response.errorMessages.join("\n");
+
+         }
+         alert(errMsg);
+         }
+         }
+         });
+
+         */
+
+    }
+    /*-------------------------------------------TODO:  资源模板调用 ------------------------------------------------------*/
+    // TODO:  渲染资源模板
+    function editResources(){
+        var resourceEditor = $.JST.createFromTemplate({}, "RESOURCE_EDITOR");
+        var resTbl=resourceEditor.find("#resourcesTable");
+        for (var i=0;i<ge.resources.length;i++){
+            var res=ge.resources[i];
+            resTbl.append($.JST.createFromTemplate(res, "RESOURCE_ROW"))
+        }
+        //绑定添加新资源
+        resourceEditor.find("#addResource").click(function(){
+            resTbl.append($.JST.createFromTemplate({id:"new",name:"新资源"}, "RESOURCE_ROW"))
+        });
+        //绑定保存事件
+        resourceEditor.find("#resSaveButton").click(function(){
+            var newRes=[];
+            for (var i=0;i<ge.resources.length;i++){
+                var res=ge.resources[i];
+                var row = resourceEditor.find("[resId="+res.id+"]");
+                if (row.size()>0){
+                    var name = row.find("input[name]").val();
+                    if (name && name!="")
+                        res.name=name;
+                    newRes.push(res);
+                } else {
+                    //删除作业
+                    for (var j=0;j<ge.tasks.length;j++){
+                        var task=ge.tasks[j];
+                        var newAss=[];
+                        for (var k=0;k<task.assigs.length;k++){
+                            var ass=task.assigs[k];
+                            if (ass.resourceId!=res.id)
+                                newAss.push(ass);
+                        }
+                        task.assigs=newAss;
+                    }
+                }
+            }
+            //循环新行
+            resourceEditor.find("[resId=new]").each(function(){
+                var row = $(this);
+                var name = row.find("input[name]").val();
+                if (name && name!="")
+                    newRes.push (new Resource("tmp_"+new Date().getTime(),name));
+            });
+            ge.resources=newRes;
+            closeBlackPopup();
+            ge.redraw();
+        });
+        var ndo = createBlackPage(400, 500).append(resourceEditor);
+    }
+    //TODO：渲染编辑弹框
+    $.JST.loadDecorator("ASSIGNMENT_ROW", function(assigTr, taskAssig) {
+        var resEl = assigTr.find("[name=resourceId]");
+        for (var i in taskAssig.task.master.resources) {
+            var res = taskAssig.task.master.resources[i];
+            var opt = $("<option>");
+            opt.val(res.id).html(res.name);
+            if (taskAssig.assig.resourceId == res.id)
+                opt.attr("selected", "true");
+            resEl.append(opt);
+        }
+        var roleEl = assigTr.find("[name=roleId]");
+        for (var i in taskAssig.task.master.roles) {
+            var role = taskAssig.task.master.roles[i];
+            var optr = $("<option>");
+            optr.val(role.id).html(role.name);
+            if (taskAssig.assig.roleId == role.id)
+                optr.attr("selected", "true");
+            roleEl.append(optr);
+        }
+        if(taskAssig.task.master.canWrite && taskAssig.task.canWrite){
+            assigTr.find(".delAssig").click(function() {
+                var tr = $(this).closest("[assigId]").fadeOut(200, function() {
+                    $(this).remove();
+                });
+            });
+        }
+    });
+
+    /*------------------------------------------- TODO: 创建数据 ------------------------------------------------------*/
+    // TODO:   创建角色
+    function setRoles() {
+        ge.roles = [
+            {
+                id:"tmp_1",
+                name:"项目经理"
+            },
+            {
+                id:"tmp_2",
+                name:"产品经理"
+            },
+            {
+                id:"tmp_3",
+                name:"程序员"
+            }
+        ];
+    }
+    // TODO:   创建执行者
+    function setResource() {
+        var res = [];
+        for (var i = 1; i <= 10; i++) {
+            res.push({id:"tmp_"+i,name:"执行者 " +i});
+        }
+        ge.resources = res;
+    }
+    // TODO: 导出数据
+    function getFile() {
+
+        $("#gimBaPrj").val(JSON.stringify(ge.saveProject()));
+        $("#gimmeBack").submit();
+        $("#gimBaPrj").val("");
+      /*  var uriContent = "data:text/html;charset=utf-8," + encodeURIComponent(JSON.stringify(prj));
+       neww=window.open(uriContent,"dl");*/
+    }
+    // TODO:   清空
+    function clearGantt() {
+        ge.reset();
+    }
+</script>
+
+</body>
+
+</html>
